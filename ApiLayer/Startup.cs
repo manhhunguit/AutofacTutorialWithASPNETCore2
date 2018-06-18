@@ -1,13 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
+using DataLayer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using ServiceLayer;
 
 namespace ApiLayer
 {
@@ -21,9 +20,21 @@ namespace ApiLayer
         public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
+        public IServiceProvider ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
+
+            var builder = new ContainerBuilder();
+            builder.Populate(services);
+            // Register components for data layer
+            builder.RegisterAssemblyTypes(typeof(IUserDataLayer).Assembly)
+                .AsImplementedInterfaces();
+
+            // Register components for service layer
+            builder.RegisterAssemblyTypes(typeof(IUserServiceLayer).Assembly)
+                .AsImplementedInterfaces();
+
+            return new AutofacServiceProvider(builder.Build());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
